@@ -24,7 +24,8 @@ CROWDED = {"w": 0.3, "M": 0.3, "W": 0.3, "at": 0.3, "percent": 0.3, "ae": 0.3, "
 CROWDED_BEARING = 0.55
 ARCHED = {"m"}          # fitted by making the arches smaller whole and the legs longer
 ARCHED_BEARING = 0.6
-ARCHED_STROKE = 0.9     # its stems, beside its neighbours'
+ARCHED_STROKE = 0.95    # its stems, beside its neighbours'
+ARCHED_RISE = 0.86      # how tall its arches stay: 1 is Allo's height, which leaves them narrow and steep
 # Capitals and figures are made smaller whole, not just narrower, so their shapes are kept: to 17 px at 13pt
 # on a Retina display, where Allo's capitals are 1490 units before it is enlarged.
 CAP_SCALE = 17 * PIXEL / (1490 * SIZE)
@@ -156,10 +157,11 @@ class Fitter:
         return self._squash(name, O.transform(shape, lambda p: (p[0] * scale + dx, p[1]))), cell, scale, dx
 
     def _arched(self, name):
-        """m: three stems under two arches, too wide for the cell by a third. Squeezing it sideways turns
-        its round arches into pointed ones, so the arched part is made smaller and the straight legs under
-        it longer. It is drawn from a heavier weight, to keep its strokes, but a little lighter than its
-        neighbours': with half the room inside, full-weight stems make it the darkest letter in a word."""
+        """m: three stems under two arches, too wide for the cell by a third. It is narrowed, and its
+        arches are made a little lower with the straight legs under them longer, so that they spring from
+        about where the arches of n and h do. It is drawn from a heavier weight, to keep its strokes, but a
+        touch lighter than its neighbours': with half the room inside, full-weight stems make it the
+        darkest letter in a word."""
         allo, cell = self.allo, self.cell
         want = ARCHED_STROKE * allo.stem(self.wght)
         w, scale = self.wght, 1.0
@@ -171,11 +173,7 @@ class Fitter:
         shape = allo.shape(name, w)
         b = O.bounds(shape)
         top = allo.x_height(w)
-        # The arches keep their stroke too: where the stems came out at some share of full weight (in Bold
-        # there is no weight heavy enough), the arched part is made just tall enough for its tops to match.
-        bar = lambda weight: O.bounds(allo.shape("hyphen", weight))[3] - O.bounds(allo.shape("hyphen", weight))[1]  # noqa: E731
-        got = allo.stem(w) * scale / allo.stem(self.wght)
-        rise = min(1.0, max(scale, got * bar(self.wght) / bar(w)))
+        rise = ARCHED_RISE
         curved = min(p[1] for c in shape for seg in c if seg[0] == "Q" for p in seg[1:] if p[1] > 0.3 * top)
         foot, knee = 0.15 * top, top - (top - curved) * rise      # the legs between them are stretched
 
