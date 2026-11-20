@@ -110,8 +110,9 @@ GROUPS = [   # name, its characters, the letter whose height is the band measure
 ]
 DENSITY = (0.82, 1.25)   # how much darker or lighter than in the reference font a glyph may be, each beside its own group
 STROKE = (0.75, 1.35)    # and how much thicker or thinner its strokes
-# Differences that are choices, not faults: i has no flag or foot here, and the zero's slash is Allo's, a thin one.
-BARE = "i0"
+# Differences that are choices, not faults: i has no flag or foot here, I keeps Allo's short serifs, and the
+# zero's slash is Allo's, a thin one.
+BARE = "iI0"
 
 
 def _mask(face, ch):

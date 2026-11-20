@@ -30,13 +30,13 @@ COPYRIGHT = (
 )
 LICENCE = "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://openfontlicense.org"
 
-CELL = 1024   # 13 px at 13pt on a Retina display: half an em, a narrow cell
+CELL = 1103   # 14 px at 13pt on a Retina display: narrow, but wide enough that the round letters stay round
 SLANT = 9     # degrees, as Allo's obliques
 # The weight of Allo each style is drawn from: sturdier than Allo's own Regular and Bold,
 # because the bounce is in the fat strokes and a grid thins a face out.
-# At 474 the stems are 2.6 px wide at 13pt on a Retina display, and at 695 they are 3.7: as bold as a cell
-# this narrow can carry, with m still able to keep up.
-STYLES = {"Regular": 474, "Bold": 695, "Italic": 474, "BoldItalic": 695}
+# At 474 the stems are 2.6 px wide at 13pt on a Retina display, and at 746 they are 4.0: about as bold as
+# the cell can carry with m still able to keep up.
+STYLES = {"Regular": 474, "Bold": 746, "Italic": 474, "BoldItalic": 746}
 STYLE_NAMES = {"Regular": "Regular", "Bold": "Bold", "Italic": "Italic", "BoldItalic": "Bold Italic"}
 WIN_ASCENT, WIN_DESCENT = 2250, 600   # clipping bounds only: beyond the tallest accent in any style
 
