@@ -7,7 +7,8 @@ answer, at the size the font is used:
 
   - which characters could be mistaken for each other;
   - whether any ink leaves its cell, where a terminal may clip it;
-  - how even the texture is: how much the letters differ in darkness;
+  - how even the texture is: which glyphs are darker, lighter, thicker or thinner beside their neighbours
+    than the same glyph is in an ordinary code font;
   - how exactly the cell lands on whole pixels at common sizes.
 
 Every character is rasterised from the built font into its own cell, as at
@@ -102,6 +103,66 @@ def overflow(path):
     return sorted(out, reverse=True), {hmtx[n][0] for n in font.getGlyphOrder()} - {0}, font["head"].unitsPerEm
 
 
+GROUPS = [   # name, its characters, the letter whose height is the band measured, the letter whose stroke is the standard
+    ("lowercase", "abcdefghijklmnopqrstuvwxyz", "x", "n"),
+    ("capitals", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "H", "H"),
+    ("figures and signs", "0123456789%&@#$", "H", "H"),
+]
+DENSITY = (0.82, 1.25)   # how much darker or lighter than in the reference font a glyph may be, each beside its own group
+STROKE = (0.75, 1.35)    # and how much thicker or thinner its strokes
+# Differences that are choices, not faults: i has no flag or foot here, and the zero's slash is Allo's, a thin one.
+BARE = "i0"
+
+
+def _mask(face, ch):
+    """The character at full drawing size, before it is averaged down to pixels."""
+    img = Image.new("L", (face.width, face.ascent + face.descent), 0)
+    ImageDraw.Draw(img).text((0, 0), ch, font=face.font, fill=255)
+    return img
+
+
+def _measure(face, chars, band_of, standard):
+    """For each character: how dense its ink is within the band (the x-height for lowercase, the cap height
+    for the rest, so that ascenders and descenders do not count), beside its group's mean; and how thick
+    its strokes are where a level line crosses them, beside the standard letter's."""
+    box = _mask(face, band_of).getbbox()
+    top, bottom = box[1], box[3]
+    rows = [top + round((bottom - top) * f) for f in (0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)]
+
+    def stroke(img):
+        runs = []
+        for y in rows:
+            line = img.crop((0, y, img.width, y + 1)).tobytes()
+            run = 0
+            for v in line + b"\x00":
+                if v > 127:
+                    run += 1
+                elif run:
+                    runs.append(run)
+                    run = 0
+        runs.sort()                       # the thinner crossings are the strokes; the long ones are bars and bowls met side on
+        return runs[len(runs) // 4] if runs else 0
+
+    masks = {ch: _mask(face, ch) for ch in chars + standard}
+    ink = {ch: sum(masks[ch].crop((0, top, face.width, bottom)).tobytes()) for ch in chars}
+    mean = sum(ink.values()) / len(ink)
+    unit = stroke(masks[standard]) or 1
+    return {ch: (ink[ch] / mean, stroke(masks[ch]) / unit) for ch in chars}
+
+
+def uneven(face, ref):
+    """Glyphs that are darker, lighter, thicker or thinner beside their group than the same glyph is in the
+    reference font. An i is light in any monospace and an m dark; this asks only whether ours is more so."""
+    out = []
+    for _, chars, band_of, standard in GROUPS:
+        ours, theirs = _measure(face, chars, band_of, standard), _measure(ref, chars, band_of, standard)
+        for ch in chars:
+            density, stroke = ours[ch][0] / theirs[ch][0], (ours[ch][1] / theirs[ch][1] if theirs[ch][1] else 1)
+            if ch not in BARE and (not DENSITY[0] <= density <= DENSITY[1] or not STROKE[0] <= stroke <= STROKE[1]):
+                out.append((ch, density, stroke))
+    return out
+
+
 def judge(path):
     face = Face(path)
     ref = reference_for(path)
@@ -131,8 +192,11 @@ def judge(path):
     print("   advances: %s" % ("one width, %d units" % advances.pop() if len(advances) == 1 else "NOT monospaced: %s" % sorted(advances)))
     print("   ink outside the cell: %s" % (", ".join("%s %d" % (n, d) for d, n in spilled[:8]) if spilled else "none"))
     print("   texture (unevenness of the lowercase): %.3f%s" % (texture(face), ", %s %.3f" % (name, texture(ref)) if ref else ""))
+    rough = uneven(face, ref) if ref else []
+    print("   uneven beside %s (density, stroke; 1.00 = as there): %s" % (name, "  ".join("%s %.2f %.2f" % r for r in rough) if rough else "none"))
     adv = face.font.getlength("0") / SUPER / PPEM
     print("   cell in pixels on a Retina display: " + "  ".join("%gpt %.2f" % (pt, adv * pt * 2) for pt in (11, 12, 13, 14, 15, 16)) + "\n")
+    problems = problems + [r[0] for r in rough]
     return problems if "Italic" in Path(path).stem else problems + [n for d, n in spilled if d > 8]    # an upright must stay in its cell
 
 

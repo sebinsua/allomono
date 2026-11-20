@@ -20,7 +20,8 @@ NARROW = 0.72           # glyphs narrower than this share of the cell are not gr
 COMPENSATE = 0.7        # 0: stems scale with the glyph; 1: they keep full thickness
 HARD_COMPENSATE = 0.35  # the same, for a glyph condensed to 60%: its counters need the room more
 # Letters with three stems or four diagonals get thinner strokes and less margin, as in any monospace.
-CROWDED = {"w": 0.3, "M": 0.3, "W": 0.3, "at": 0.3, "percent": 0.3, "ae": 0.3, "oe": 0.3, "AE": 0.3, "OE": 0.3}
+CROWDED = {"w": 0.5, "M": 0.45, "W": 0.5, "at": 0.5, "ae": 0.3, "oe": 0.3, "AE": 0.3, "OE": 0.3}
+STURDY = {"percent": 0.9}   # two small rings and a stroke: left to the usual rule it came out the lightest sign
 CROWDED_BEARING = 0.55
 ARCHED = {"m"}          # fitted by making the arches smaller whole and the legs longer
 ARCHED_BEARING = 0.6
@@ -144,10 +145,10 @@ class Fitter:
                 scale = 1.0
                 break
             over = min(max((adv / cell - 1) / 0.2, 0), 1)
-            keep = CROWDED_BEARING if name in CROWDED else BEARING - (BEARING - WIDE_BEARING) * over
+            keep = CROWDED_BEARING if name in CROWDED or name in STURDY else BEARING - (BEARING - WIDE_BEARING) * over
             scale = min(CAP_SCALE if name in self.squashed else MAX_GROW, (cell - keep * max(left + right, 0)) / ink)
             hard = min(max((0.9 - scale) / 0.3, 0), 1)
-            k = CROWDED.get(name, COMPENSATE - (COMPENSATE - HARD_COMPENSATE) * hard)
+            k = STURDY.get(name, CROWDED.get(name, COMPENSATE - (COMPENSATE - HARD_COMPENSATE) * hard))
             w = allo.weight_for_stem(allo.stem(self.wght) * scale**-k)
         shape, adv = allo.shape(name, w), allo.advance(name, w)
         b = O.bounds(shape)
