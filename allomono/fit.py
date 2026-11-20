@@ -26,6 +26,8 @@ ARCHED = {"m"}          # fitted by making the arches smaller whole and the legs
 ARCHED_BEARING = 0.6
 ARCHED_STROKE = 0.95    # its stems, beside its neighbours'
 ARCHED_RISE = 0.86      # how tall its arches stay: 1 is Allo's height, which leaves them narrow and steep
+ARCHED_COUNTER = 0.13   # the least each of its two counters may be, as a share of the cell
+ARCHED_EDGE = 0.02      # and the least clear either side of it
 # Capitals and figures stand 18 px tall at 13pt on a Retina display, a little under Allo's own height. In a
 # narrow cell they are made narrower than that too: more so than the lowercase.
 CAP_SCALE = 18 * PIXEL / (1490 * SIZE)
@@ -173,7 +175,12 @@ class Fitter:
         shape = allo.shape(name, w)
         b = O.bounds(shape)
         top = allo.x_height(w)
-        rise = ARCHED_RISE
+        # In Bold there is no weight of Allo heavy enough for three stems this close together, so they come
+        # out thinner than asked. They are thickened afterwards, as far as leaves the two counters open; and
+        # the arches are made lower by whatever share is still missing, or their tops would outweigh the stems.
+        most = (cell - 2 * ARCHED_EDGE * cell - 2 * ARCHED_COUNTER * cell) / 3
+        final = min(want, max(allo.stem(w) * scale, most))
+        rise = ARCHED_RISE * min(1.0, final / want)
         curved = min(p[1] for c in shape for seg in c if seg[0] == "Q" for p in seg[1:] if p[1] > 0.3 * top)
         foot, knee = 0.15 * top, top - (top - curved) * rise      # the legs between them are stretched
 
@@ -184,6 +191,20 @@ class Fitter:
 
         dx = (cell - (b[2] - b[0]) * scale) / 2 - b[0] * scale
         shape = O.transform(shape, lambda p: (p[0] * scale + dx, y(p[1])))
+        edges = sorted({round(seg[1][0], 1) for c in shape for seg in c if seg[0] == "L" and abs(seg[1][0] - seg[2][0]) < 0.5 and abs(seg[1][1] - seg[2][1]) > 0.25 * top})
+        more = (final - (edges[1] - edges[0])) / 2 if len(edges) == 6 else 0
+        if more > 0.5:
+            # each side of each stem moves out by `more`; what lies between is carried along in proportion
+            moved = [e + (-more if i % 2 == 0 else more) for i, e in enumerate(edges)]
+            was, now = [-cell] + edges + [2 * cell], [-cell - more] + moved + [2 * cell + more]
+
+            def x(v):
+                for i in range(len(was) - 1):
+                    if was[i] <= v <= was[i + 1]:
+                        return now[i] + (v - was[i]) * (now[i + 1] - now[i]) / (was[i + 1] - was[i])
+                return v
+
+            shape = O.transform(shape, lambda p: (x(p[0]), p[1]))
         return shape, cell, scale, dx
 
     def _squash(self, name, shape):
