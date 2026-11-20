@@ -3,7 +3,7 @@
 A bare stem takes up a fifth of a cell, and no placing of it hides the rest.
 Every monospace answers that the same way: something at the top left of the
 stem and something along the bottom. Here it is done with Allo's own parts.
-i and l end in the tail Allo gives its tailed l, made long, as on t; i has a
+i and l end in the tail Allo gives its tailed l, made a little longer; i has a
 short flag in the stroke of Allo's crossbars; and hooks and arms grow as
 curves (outline.swell).
 """
@@ -11,7 +11,8 @@ from . import outline as O
 
 
 STEM = 0.13      # how far left of the centre the stems of i and l stand, as a share of the cell
-TAIL = 0.36      # how far right of the centre the tails of i, l and t reach
+FOOT = 0.24      # how far right of the centre the tails of i and l reach
+TAIL = 0.36      # and the tail of t
 FLAG = 0.17      # the length of the flag on i
 BAR = 0.36       # how far the crossbar of t reaches left of the centre
 
@@ -54,13 +55,13 @@ def specials(allo, wght, cell):
     reach = 0.27 * cell                      # how far from the centre these letters extend
     out = {}
 
-    # i and l: the stem stands left of centre and ends in the tail Allo gives its tailed l, made long, so it
-    # runs low along the baseline toward the next letter, as the tail of t does. i has a short flag as well.
+    # i and l: the stem stands left of centre and ends in the tail Allo gives its tailed l, a little longer, so it
+    # turns toward the next letter without reaching it. i has a short flag as well.
     sc = cx - STEM * cell
     for name, top in (("l.ss02", m.ascender), ("idotless", m.x_height)):
         shape, _ = _place(allo.shape("l.ss02", wght), m.ascender * 0.6, sc)
         shape = O.lower_top(shape, m.x_height / 2, top - m.ascender)
-        shape = _grow_right(shape, cx + TAIL * cell, O.level_x(shape, "bottom") + 1)
+        shape = _grow_right(shape, cx + FOOT * cell, O.level_x(shape, "bottom") + 1)
         if name == "idotless":
             shape.append(O.rounded_rect(sc - v / 2 - FLAG * cell, top - h, sc + v / 2, top, r))
         lo, hi = O.span_at(allo.shape(name, wght), top / 2)
