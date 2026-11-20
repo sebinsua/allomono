@@ -1,17 +1,19 @@
-"""The letters too narrow for a cell, widened in Allo's own voice.
+"""The letters too narrow for a cell, widened so that they fill it.
 
-Allo's own narrow letters end in curves: the tail of its l and t, the hook of
-its j. Here i takes the tail of l, and where a letter needs more width its
-curves grow (outline.swell). Nothing is added to the top of a stem: flags and
-slabs read as monospace rather than as Allo. These letters are narrow, and are
-left with air round them.
+A bare stem takes up a fifth of a cell, and no placing of it hides the rest.
+Every monospace answers that the same way: something at the top left of the
+stem and something along the bottom. Here it is done with Allo's own parts.
+i and l end in the tail Allo gives its tailed l, made long, as on t; i has a
+short flag in the stroke of Allo's crossbars; and hooks and arms grow as
+curves (outline.swell).
 """
 from . import outline as O
 
 
-TAIL = 0.27      # how far a tail or hook reaches beyond its stem, as a share of the cell
-HOOK = 1.25      # i, l and t end in the hook of Allo's j, at this many times its size. None: in Allo's flatter tail
-BAR = 0.36       # how far the crossbar of t reaches either side of the centre, as a share of the cell
+STEM = 0.13      # how far left of the centre the stems of i and l stand, as a share of the cell
+TAIL = 0.36      # how far right of the centre the tails of i, l and t reach
+FLAG = 0.17      # the length of the flag on i
+BAR = 0.36       # how far the crossbar of t reaches left of the centre
 
 
 class Measure:
@@ -52,30 +54,22 @@ def specials(allo, wght, cell):
     reach = 0.27 * cell                      # how far from the centre these letters extend
     out = {}
 
-    def hooked(top, sc):
-        """A stem ending in a round, upturned hook: the hook of Allo's j, turned to face right and set on the
-        baseline. It is sized whole, from a weight of Allo that keeps its stroke the thickness of the stem."""
-        light = allo.weight_for_stem(v / HOOK)
-        shape = O.scale(allo.shape("jdotless", light), HOOK, (0, 0))
-        lo, hi = O.span_at(shape, m.x_height / 2)
-        shape = [O.reverse(c) for c in O.transform(shape, lambda p: (sc + (lo + hi) / 2 - p[0], p[1]))]
-        shape = O.shift(shape, 0, O.bounds(allo.shape("o", wght))[1] - O.bounds(shape)[1])   # sits where o sits
-        return O.lower_top(shape, m.x_height * 0.8, top - O.bounds(shape)[3])
-
-    # i and l: a stem and its ending, and nothing else, centred in the cell as a whole. The ending is the
-    # tail Allo gives its tailed l, or, with HOOK set, a rounder hook.
+    # i and l: the stem stands left of centre and ends in the tail Allo gives its tailed l, made long, so it
+    # runs low along the baseline toward the next letter, as the tail of t does. i has a short flag as well.
+    sc = cx - STEM * cell
     for name, top in (("l.ss02", m.ascender), ("idotless", m.x_height)):
-        shape = hooked(top, cx) if HOOK else O.lower_top(allo.shape("l.ss02", wght), m.x_height / 2, top - m.ascender)
-        b = O.bounds(shape)
-        dx = cx - (b[0] + b[2]) / 2
-        was = O.span_at(shape, top / 2)
+        shape, _ = _place(allo.shape("l.ss02", wght), m.ascender * 0.6, sc)
+        shape = O.lower_top(shape, m.x_height / 2, top - m.ascender)
+        shape = _grow_right(shape, cx + TAIL * cell, O.level_x(shape, "bottom") + 1)
+        if name == "idotless":
+            shape.append(O.rounded_rect(sc - v / 2 - FLAG * cell, top - h, sc + v / 2, top, r))
         lo, hi = O.span_at(allo.shape(name, wght), top / 2)
-        out[name] = (O.union(O.shift(shape, dx)), (was[0] + was[1]) / 2 + dx - (lo + hi) / 2)
+        out[name] = (O.union(shape), sc - (lo + hi) / 2)
 
-    # j: Allo's j, its hook grown to the same length
+    # j: Allo's j, its hook grown
     sc = cx                                  # in the middle: its hook reaches back under the letter before
     shape, was = _place(allo.shape("jdotless", wght), m.x_height / 2, sc)
-    shape = _grow_left(shape, sc - v / 2 - TAIL * cell, O.level_x(shape, "bottom", x_max=sc - v / 2) - 1)
+    shape = _grow_left(shape, sc - v / 2 - 0.27 * cell, O.level_x(shape, "bottom", x_max=sc - v / 2) - 1)
     out["jdotless"] = (O.union(shape), sc - was)
 
     # f: a wider hook, and the crossbar a little longer to the left
@@ -85,20 +79,12 @@ def specials(allo, wght, cell):
     shape = _grow_left(shape, cx - reach, (O.bounds(shape)[0] + sc - v / 2) / 2)
     out["f"] = (O.union(shape), sc - was)
 
-    # t: a wider tail, and the crossbar a little longer to the left
+    # t: a longer tail, and a wide crossbar
     sc = cx - 0.08 * cell
     t = allo.shape("t", wght)
     shape, was = _place(t, m.x_height + 0.5 * (O.bounds(t)[3] - m.x_height), sc)
-    if HOOK:                                 # a wide crossbar; the tail below it is replaced
-        shape = _grow_right(shape, cx + BAR * cell, sc + v / 2 + 8)
-    else:
-        shape = _grow_right(shape, cx + reach, O.level_x(shape, "bottom", x_min=sc + v / 2) + 1)
-    shape = _grow_left(shape, cx - (BAR if HOOK else 0.27) * cell, (O.bounds(shape)[0] + sc - v / 2) / 2)
-    if HOOK:                                 # the same ending as i and l, below the crossbar
-        cut, big = 0.45 * m.x_height, 4 * cell
-        upper = O.subtract(O.union(shape), [O.rounded_rect(-big, -big, big, cut, 0)])
-        lower = O.subtract(O.union(hooked(m.x_height, sc)), [O.rounded_rect(-big, cut, big, big, 0)])
-        shape = upper + lower
+    shape = _grow_right(shape, cx + TAIL * cell, O.level_x(shape, "bottom", x_min=sc + v / 2) + 1)
+    shape = _grow_left(shape, cx - BAR * cell, (O.bounds(shape)[0] + sc - v / 2) / 2)
     out["t"] = (O.union(shape), sc - was)
 
     # r: a wider arm

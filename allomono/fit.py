@@ -25,8 +25,8 @@ STURDY = {"percent": 0.9}   # two small rings and a stroke: left to the usual ru
 CROWDED_BEARING = 0.55
 ARCHED = {"m"}          # fitted by making the arches smaller whole and the legs longer
 ARCHED_BEARING = 0.6
-ARCHED_STROKE = 0.95    # its stems, beside its neighbours'
-ARCHED_RISE = 0.86      # how tall its arches stay: 1 is Allo's height, which leaves them narrow and steep
+ARCHED_STROKE = 1.0     # its stems, beside its neighbours'
+ARCHED_RISE = 1.0       # how tall its arches stay: 1 is Allo's height
 ARCHED_COUNTER = 0.13   # the least each of its two counters may be, as a share of the cell
 ARCHED_EDGE = 0.02      # and the least clear either side of it
 # Capitals and figures stand 18 px tall at 13pt on a Retina display, a little under Allo's own height. In a
