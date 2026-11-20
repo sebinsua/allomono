@@ -1,6 +1,6 @@
 """Allo, the font allomono is made from: its letters at any weight, as outlines.
 
-Allo is read from its variable font (fetched by fetch.py), at its display
+Allo is read from its variable font (fetched by fetch.py), at its text
 optical size and the roundness of its static fonts.
 """
 from bisect import bisect_left
@@ -14,12 +14,12 @@ from . import outline as O
 ROOT = Path(__file__).resolve().parent.parent
 ALLO = ROOT / "upstream/allo/fonts/variable/AlloVariable.ttf"
 
-OPSZ = 32   # Allo's display design: the round counters and lower x-height it shows on its own site
+OPSZ = 14   # Allo's text design: a tall x-height and letters already a little narrow, as a small size wants
 ROND = 50   # the roundness of Allo's static fonts, and of its own site
-# Allo is set this much larger, so its letters fill the cell without being stretched. The exact figure puts
-# the x-height on a whole pixel (14) at 13pt on a Retina display, so the tops of the lowercase are sharp.
+# Allo is set at the size that puts its x-height on a whole pixel (14) at 13pt on a Retina display, so the
+# tops of the lowercase are sharp.
 PIXEL = 2048 / 26
-SIZE = 14 * PIXEL / 1035
+SIZE = 14 * PIXEL / 1118
 
 
 def preferred(name, have):

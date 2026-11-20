@@ -3,7 +3,7 @@
 <p align="center">A friendly monospace font, made from <a href="https://allo.joshpuckett.me">Allo</a>.</p>
 
 <p align="center">
-  <img src="docs/hello-46d03aba.png" width="760" alt="Greetings in many languages and a short Rust function, set in allomono">
+  <img src="docs/hello-5d308240.png" width="760" alt="Greetings in many languages and a short Rust function, set in allomono">
 </p>
 
 ## Install
@@ -20,7 +20,7 @@ ordinary ones.
 - Arrows when you type them: `->`, `=>` and `<-` with a space either side.
   They never change the width of anything.
 - 996 characters, including accented Latin, box drawing and the symbols
-  terminal programs print. [See them all.](docs/characters-51aa1eac.png)
+  terminal programs print. [See them all.](docs/characters-e5708e9a.png)
 
 ## Too much?
 

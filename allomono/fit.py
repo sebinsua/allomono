@@ -26,11 +26,11 @@ ARCHED = {"m"}          # fitted by making the arches smaller whole and the legs
 ARCHED_BEARING = 0.6
 ARCHED_STROKE = 0.95    # its stems, beside its neighbours'
 ARCHED_RISE = 0.86      # how tall its arches stay: 1 is Allo's height, which leaves them narrow and steep
-# Capitals and figures are made smaller whole, not just narrower, so their shapes are kept: to 17 px at 13pt
-# on a Retina display, where Allo's capitals are 1490 units before it is enlarged.
-CAP_SCALE = 17 * PIXEL / (1490 * SIZE)
+# Capitals and figures stand 18 px tall at 13pt on a Retina display, a little under Allo's own height. In a
+# narrow cell they are made narrower than that too: more so than the lowercase.
+CAP_SCALE = 18 * PIXEL / (1490 * SIZE)
 CAP_HEIGHT_SIGNS = "!?&%#$@£€¥"
-ASCENDER = 19 / 17      # ascenders are cut to 19 px beside 17 px capitals: enlarging the lowercase left them towering
+ASCENDER = 19 / 18      # ascenders stand 19 px: Allo's, trimmed to the pixel
 TALL = "bdfhkl\u00fe"    # the letters with an upright stem above the x-height
 
 # Everything else
@@ -42,7 +42,7 @@ MARGIN = 0.06           # of the cell, kept clear either side of a symbol
 ARROW = 0.82            # a typed arrow's size beside Allo's
 SYMBOLS = [  # arrows, keys, shapes and icons; infinity; fractions; per mille, numero and the degree signs
     (0x2190, 0x21FF), (0x2300, 0x23FF), (0x2460, 0x27BF), (0x2B00, 0x2BFF), (0x221E, 0x221E),
-    (0xBC, 0xBE), (0x2150, 0x215F), (0x2030, 0x2030), (0x2116, 0x2116), (0x2103, 0x2103), (0x2109, 0x2109),
+    (0xBC, 0xBE), (0x2150, 0x215F), (0x2030, 0x2030), (0x2044, 0x2044), (0x2116, 0x2116), (0x2103, 0x2103), (0x2109, 0x2109),
 ]  # fmt: skip
 
 
@@ -208,8 +208,6 @@ class Fitter:
             b = O.bounds(m)
             centre = (b[0] + b[2]) / 2
             drop = self.cap * (CAP_SCALE - 1) if base_name in self.squashed and b[1] > self.cap / 2 else 0
-            if mark == "dotaccentcomb" and base_name in ("idotless", "jdotless"):
-                drop = min(0, ASCENDER * self.cap * CAP_SCALE - b[3])      # the dot stands no taller than an ascender
             shape += O.turning_like(O.shift(m, (centre - base_x) * scale + dx - centre, drop), base)
         b = O.bounds(shape)
         return (shape, adv, scale, dx) if b[0] >= 0 and b[2] <= self.cell else None
@@ -238,7 +236,8 @@ class Fitter:
         shape = self.allo.shape(name, self.wght)
         b = O.bounds(shape)
         y = 0 if ch in ON_BASELINE else b[3] if ch in ON_TOP else (b[1] + b[3]) / 2
-        return self._centred(O.scale(shape, PUNCTUATION, ((b[0] + b[2]) / 2, y)))
+        larger = min(PUNCTUATION, 0.94 * self.cell / (b[2] - b[0]))      # a pair of quotes has to stay in its cell
+        return self._centred(O.scale(shape, larger, ((b[0] + b[2]) / 2, y)))
 
     def _level(self, name, width):
         """A level stroke, made `width` long."""

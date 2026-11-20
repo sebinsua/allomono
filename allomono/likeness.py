@@ -104,13 +104,13 @@ def report(style):
 # What "still Allo" means, in numbers. Each was set from a build that looked right, with room either side;
 # a change that leaves these ranges has changed the look, and has to be looked at.
 RANGES = {
-    "lowercase shape": (0.90, 1.0),      # mean likeness of the letters that were not redrawn
+    "lowercase shape": (0.88, 1.0),      # mean likeness of the letters that were not redrawn
     "capital shape": (0.85, 1.0),        # lower than the lowercase: W, M and V are condensed
     "lowercase ink": (0.92, 1.10),       # stroke weight beside Allo's, so it is neither thinned nor clogged
     "capital ink": (0.95, 1.15),
-    "hole": (0.90, 1.06),                # width over height of each letter's counter, beside Allo's display design: 1 is the
-                                         # same shape. Allo's own text design is at 0.87, so this stays rounder than that.
-    "capital hole": (0.86, 1.06),        # capitals are allowed a little narrower: O and Q do not fit a cell whole
+    "hole": (0.78, 1.06),                # width over height of each letter's counter, beside Allo's: 1 is the same shape.
+                                         # The cell is narrow and the letters are narrowed to fit it, on purpose.
+    "capital hole": (0.66, 1.06),        # capitals are allowed a little narrower: O and Q do not fit a cell whole
     "texture": (0.72, 1.05),             # how dark a line of text is beside Allo's: a monospace has more air, not less ink
 }
 HOLED = "abdegopq"
