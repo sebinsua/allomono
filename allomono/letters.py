@@ -12,7 +12,7 @@ from . import outline as O
 
 STEM = 0.13      # how far left of the centre the stems of i and l stand, as a share of the cell
 FOOT = 0.24      # how far right of the centre the tails of i and l reach
-TAIL = 0.36      # and the tail of t
+TAIL = 0.29      # and the tail of t: the same length from its stem, which stands further right
 FLAG = 0.17      # the length of the flag on i
 BAR = 0.36       # how far the crossbar of t reaches left of the centre
 
