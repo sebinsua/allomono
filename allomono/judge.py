@@ -97,8 +97,7 @@ def overflow(path):
     for name in font.getGlyphOrder():
         g, adv = glyf[name], hmtx[name][0]
         joins = name.endswith(".liga") or (name.startswith("uni") and (0x23BF <= int(name[3:7], 16) < 0x25A0 or 0xE0B0 <= int(name[3:7], 16) <= 0xE0B7))   # meant to reach the next cell
-        leans = any(part in name for part in (".east", ".west"))      # drawn toward a neighbour, by up to half a pixel past the cell
-        if g.numberOfContours and adv and not joins and not leans and (g.xMin < -1 or g.xMax > adv + 1):
+        if g.numberOfContours and adv and not joins and (g.xMin < -1 or g.xMax > adv + 1):
             out.append((max(-g.xMin, g.xMax - adv), name))
     return sorted(out, reverse=True), {hmtx[n][0] for n in font.getGlyphOrder()} - {0}, font["head"].unitsPerEm
 

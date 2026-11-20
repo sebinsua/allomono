@@ -208,6 +208,8 @@ class Fitter:
             b = O.bounds(m)
             centre = (b[0] + b[2]) / 2
             drop = self.cap * (CAP_SCALE - 1) if base_name in self.squashed and b[1] > self.cap / 2 else 0
+            if mark == "dotaccentcomb" and base_name in ("idotless", "jdotless"):
+                drop = min(0, ASCENDER * self.cap * CAP_SCALE - b[3])      # the dot stands no taller than an ascender
             shape += O.turning_like(O.shift(m, (centre - base_x) * scale + dx - centre, drop), base)
         b = O.bounds(shape)
         return (shape, adv, scale, dx) if b[0] >= 0 and b[2] <= self.cell else None

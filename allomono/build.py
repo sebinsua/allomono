@@ -30,14 +30,12 @@ COPYRIGHT = (
 )
 LICENCE = "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://openfontlicense.org"
 
-CELL = 1260   # 16 px at 13pt on a Retina display, so a terminal has nothing to round
-OPEN = 3.5    # a letter with this many pixels clear on one side is open there: its neighbour leans in
-LEAN = 2      # by at most this many pixels
+CELL = 1182   # 15 px at 13pt on a Retina display
 SLANT = 9     # degrees, as Allo's obliques
 # The weight of Allo each style is drawn from: sturdier than Allo's own Regular and Bold,
 # because the bounce is in the fat strokes and a grid thins a face out.
-# At 537 the stems are 3 px wide at 13pt on a Retina display.
-STYLES = {"Regular": 537, "Bold": 800, "Italic": 537, "BoldItalic": 800}
+# At 466 the stems are 2.6 px wide at 13pt on a Retina display: 3 px was a little too bold for everyday text.
+STYLES = {"Regular": 466, "Bold": 800, "Italic": 466, "BoldItalic": 800}
 STYLE_NAMES = {"Regular": "Regular", "Bold": "Bold", "Italic": "Italic", "BoldItalic": "Bold Italic"}
 WIN_ASCENT, WIN_DESCENT = 2250, 600   # clipping bounds only: beyond the tallest accent in any style
 
@@ -119,44 +117,6 @@ def bars(glyphs, box, cmap, cell):
         left.append(f"    sub [{' '.join(tall_any)}] {name[i]}' by {name[i]}.l;")
         left.append(f"    sub [{' '.join(tall_any)}] {name[i]}.r' by {name[i]}.lr;")
     return ["  lookup bars_right {\n" + "\n".join(right) + "\n  } bars_right;", "  lookup bars_left {\n" + "\n".join(left) + "\n  } bars_left;"]
-
-
-def heal(glyphs, cmap, cell):
-    """Share out the empty space beside thin letters. Every character keeps its cell, but a letter next to
-    the open side of a thin one (an l, an i, the right of a t) is drawn a pixel or two toward it, and the
-    letter beyond follows by half as much. Two thin letters lean toward each other. Nothing is added to a
-    letter and nothing is stretched: only where it stands in its cell changes with its neighbours."""
-    names = [cmap[ord(c)] for c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"]
-    room = {n: (O.bounds(glyphs.shapes[n])[0], cell - O.bounds(glyphs.shapes[n])[2]) for n in names}
-    open_left = [n for n in names if room[n][0] >= OPEN * PIXEL]
-    open_right = [n for n in names if room[n][1] >= OPEN * PIXEL]
-
-    def leaning(suffix, side, most):
-        """Each letter moved toward one side by whole pixels, as far as `most` and the room it has allow."""
-        out = []
-        for n in names:
-            pixels = min(most, int((room[n][side] + PIXEL / 2) // PIXEL))
-            if pixels <= 0:
-                out.append(n)
-                continue
-            glyphs.add(n + suffix, O.shift(glyphs.shapes[n], pixels * PIXEL * (1 if side else -1)), cell, upright=glyphs.upright[n])
-            out.append(n + suffix)
-        return out
-
-    east, west = leaning(".east", 1, LEAN), leaning(".west", 0, LEAN)
-    east_half, west_half = leaning(".east1", 1, LEAN // 2), leaning(".west1", 0, LEAN // 2)
-    moved = lambda variants: [v for n, v in zip(names, variants) if v != n]  # noqa: E731
-    group = lambda xs: "[" + " ".join(xs) + "]"  # noqa: E731
-    after_open = group(open_right + [n + s for n in open_right for s in (".east", ".west") if n + s in glyphs.shapes])
-    return [f"""  lookup lean {{
-    ignore sub {after_open} {group(names)}' {group(open_left)};
-    sub {group(names)}' {group(open_left)} by {group(east)};
-    sub {after_open} {group(names)}' by {group(west)};
-  }} lean;
-  lookup follow {{
-    sub {group(names)}' {group(moved(east))} by {group(east_half)};
-    sub {group(moved(west))} {group(names)}' by {group(west_half)};
-  }} follow;"""]
 
 
 def assemble(style, glyphs, cmap, features, allo, cell, x_height, cap_height):
@@ -263,7 +223,7 @@ def build(style, wght, out, cell=None, rond=None):
             glyphs.add(cmap[cp], shape, cell, upright=True)
     # The arrows are in calt, which people turn off to keep operators as typed. The bars are in rclt, which
     # stays on, so a sparkline does not lose its joins with them.
-    typed, joined = arrows(glyphs, fit, cell) + heal(glyphs, cmap, cell), bars(glyphs, box, cmap, cell)
+    typed, joined = arrows(glyphs, fit, cell), bars(glyphs, box, cmap, cell)
     spaces = {cmap[cp] for cp in (0x20, 0xA0) if cp in cmap}
     not_space = "@not_space = [" + " ".join(n for n in glyphs.order if n not in spaces) + "];"
     features = alternates(glyphs, fit, allo) + [not_space, "feature calt {\n" + "\n".join(typed) + "\n} calt;", "feature rclt {\n" + "\n".join(joined) + "\n} rclt;"]
