@@ -30,7 +30,7 @@ COPYRIGHT = (
 )
 LICENCE = "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://openfontlicense.org"
 
-CELL = 1103   # 14 px at 13pt on a Retina display: narrow, but wide enough that the round letters stay round
+CELL = 1182   # 15 px at 13pt on a Retina display: wide enough that the round letters are round
 SLANT = 9     # degrees, as Allo's obliques
 # The weight of Allo each style is drawn from: sturdier than Allo's own Regular and Bold,
 # because the bounce is in the fat strokes and a grid thins a face out.

@@ -17,6 +17,7 @@ BEARING = 0.8           # how much of its side bearings a glyph keeps
 WIDE_BEARING = 0.6      # and how much the widest keep
 MAX_GROW = 1.04         # a letter is never stretched to fill the cell: that distorts the holes inside it
 NARROW = 0.72           # glyphs narrower than this share of the cell are not grown
+GIVE = 1 / 3            # how much of the room beside a glyph may be spent on putting its stem on a pixel
 COMPENSATE = 0.7        # 0: stems scale with the glyph; 1: they keep full thickness
 HARD_COMPENSATE = 0.35  # the same, for a glyph condensed to 60%: its counters need the room more
 # Letters with three stems or four diagonals get thinner strokes and less margin, as in any monospace.
@@ -95,18 +96,22 @@ class Fitter:
         return shape, advance, scale, dx
 
     def _to_grid(self, shape):
-        """How far to move a glyph sideways so that its first upright stem starts on a pixel edge (at 13pt
-        on a Retina display): with stems a whole number of pixels thick, both sides of it are then sharp.
-        A glyph with no upright stem is placed by its leftmost point. Never more than half a pixel."""
+        """How far to move a glyph sideways so that an upright stem starts on a pixel edge (at 13pt on a
+        Retina display), which makes that side of it sharp. It is the outer edge of the stem that is placed:
+        the left of b, the right of d. Never more than half a pixel, and never more than GIVE of the room
+        on the side it moves toward: a letter that fills its cell, like a bold m, stays in the middle of it.
+        A glyph with no upright stem stays where it was fitted: a curve or a diagonal is no sharper for
+        starting on a pixel, and the move left o, e and v nearer the next letter than the last."""
         tall = 0.25 * self.allo.x_height(self.wght)
         stems = [seg[1][0] for c in shape for seg in c if seg[0] == "L" and abs(seg[1][0] - seg[2][0]) < 0.5 and abs(seg[1][1] - seg[2][1]) > tall]
+        if not stems:
+            return 0
         b = O.bounds(shape)
-        x = min(stems) if stems else b[0]
+        on_right = max(stems) > b[2] - 1 and min(stems) > b[0] + 1
+        x = max(stems) if on_right else min(stems)
         move = round(x / PIXEL) * PIXEL - x
-        for candidate in (move, move - PIXEL if move > 0 else move + PIXEL):     # stay inside the cell
-            if b[0] + candidate >= 1 and b[2] + candidate <= self.cell - 1:
-                return candidate
-        return 0
+        room = self.cell - b[2] if move > 0 else b[0]
+        return move if abs(move) <= GIVE * room else 0
 
     def _glyph(self, name):
         allo, wght = self.allo, self.wght
