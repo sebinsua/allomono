@@ -198,6 +198,9 @@ def build(style, wght, out, cell=None, rond=None):
     # Allo reaches its alternates through private-use codes. A terminal font must leave those alone: prompts
     # use the same codes for Powerline symbols, and Allo's raised division sign would answer for a branch mark.
     cmap = {cp: preferred(name, allo.names) for cp, name in source.getBestCmap().items() if not 0xE000 <= cp <= 0xF8FF}
+    if "Italic" in style:                        # the italics take Allo's single-story a, so they are more than a slant
+        single = ALTERNATES["ss01"][1]
+        cmap = {cp: single(name) if single(name) in allo.names else name for cp, name in cmap.items()}
     order = [".notdef"] + sorted(set(cmap.values()) - {".notdef"}, key=source.getGlyphID)
     chars = {}                                   # glyph name -> the first character it stands for
     for cp, name in sorted(cmap.items()):

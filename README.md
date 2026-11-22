@@ -3,7 +3,7 @@
 <p align="center">A friendly monospace font, made from <a href="https://allo.joshpuckett.me">Allo</a>.</p>
 
 <p align="center">
-  <img src="docs/hello-a155d027.png" width="760" alt="Greetings in many languages and a short Rust function, set in allomono">
+  <img src="docs/hello-080ad037.png" width="760" alt="Greetings in many languages and a short Rust function, set in allomono">
 </p>
 
 ## Install
@@ -16,11 +16,11 @@ ordinary ones.
 
 ## What you get
 
-- Regular, Bold, Italic and Bold Italic.
+- Regular, Bold, Italic and Bold Italic. The italics have a single-story a.
 - Arrows when you type them: `->`, `=>` and `<-` with a space either side.
   They never change the width of anything.
 - 996 characters, including accented Latin, box drawing and the symbols
-  terminal programs print. [See them all.](docs/characters-e4249b6c.png)
+  terminal programs print. [See them all.](docs/characters-ba6f5f82.png)
 
 ## Too much?
 
