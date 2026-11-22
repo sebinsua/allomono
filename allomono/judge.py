@@ -9,6 +9,7 @@ answer, at the size the font is used:
   - whether any ink leaves its cell, where a terminal may clip it;
   - how even the texture is: which glyphs are darker, lighter, thicker or thinner beside their neighbours
     than the same glyph is in an ordinary code font;
+  - which neighbours nearly touch, and which stand furthest apart;
   - how exactly the cell lands on whole pixels at common sizes.
 
 Every character is rasterised from the built font into its own cell, as at
@@ -164,6 +165,45 @@ def uneven(face, ref):
     return out
 
 
+DEEP = 0.25   # white further than this share of the cell from a letter's edge is inside it, not beside it
+
+
+def gaps(face):
+    """The white between each pair of lowercase neighbours, in pixels, on the level lines through the
+    x-height. Returns (nearest, room, pair) for each. Nearest is the least distance between their ink:
+    where letters kiss. Room is the white beside the first plus the white beside the second, averaged
+    over the lines and counted only DEEP far in from each letter's edge, so that the space under the
+    arm of an r counts for something but not for everything: where letters stand apart."""
+    letters = "abcdefghijklmnopqrstuvwxyz"
+    box = _mask(face, "x").getbbox()
+    lines, deep = range(box[1], box[3]), DEEP * face.width
+    sides = {}
+    for ch in letters:
+        img, rows = _mask(face, ch), {}
+        for y in lines:
+            ink = img.crop((0, y, img.width, y + 1)).point(lambda v: 255 if v > 127 else 0).getbbox()
+            if ink:
+                rows[y] = (ink[0], face.width - ink[2])      # clear to the left of it, and to the right
+        sides[ch] = rows
+    edge = {ch: (min(l for l, _ in rows.values()), min(r for _, r in rows.values())) for ch, rows in sides.items()}
+
+    def beside(ch, side):
+        rows, near = sides[ch], edge[ch][side]
+        return sum(min(rows[y][side], near + deep) if y in rows else near + deep for y in lines) / len(lines)
+
+    out = []
+    for a in letters:
+        for b in letters:
+            nearest = min((sides[a][y][1] + sides[b][y][0] for y in sides[a] if y in sides[b]), default=edge[a][1] + edge[b][0])
+            out.append((nearest / SUPER, (beside(a, 1) + beside(b, 0)) / SUPER, a + b))
+    return out
+
+
+def _spread(between):
+    mean = sum(g[1] for g in between) / len(between)
+    return (sum((g[1] - mean) ** 2 for g in between) / len(between)) ** 0.5 / mean
+
+
 def judge(path):
     face = Face(path)
     ref = reference_for(path)
@@ -193,6 +233,10 @@ def judge(path):
     print("   advances: %s" % ("one width, %d units" % advances.pop() if len(advances) == 1 else "NOT monospaced: %s" % sorted(advances)))
     print("   ink outside the cell: %s" % (", ".join("%s %d" % (n, d) for d, n in spilled[:8]) if spilled else "none"))
     print("   texture (unevenness of the lowercase): %.3f%s" % (texture(face), ", %s %.3f" % (name, texture(ref)) if ref else ""))
+    between = gaps(face)
+    kiss, tight, loose = min(between), sorted(between, key=lambda g: g[1])[:6], sorted(between, key=lambda g: -g[1])[:6]
+    print("   room between lowercase neighbours in pixels: least " + "  ".join("%s %.1f" % (p, r) for _, r, p in tight) + ";  most " + "  ".join("%s %.1f" % (p, r) for _, r, p in loose))
+    print("   nearest any two come: %s %.1f px;  unevenness of the room: %.3f%s" % (kiss[2], kiss[0], _spread(between), ", %s %.3f" % (name, _spread(gaps(ref))) if ref else ""))
     rough = uneven(face, ref) if ref else []
     print("   uneven beside %s (density, stroke; 1.00 = as there): %s" % (name, "  ".join("%s %.2f %.2f" % r for r in rough) if rough else "none"))
     adv = face.font.getlength("0") / SUPER / PPEM
